@@ -226,6 +226,7 @@ tgt_opts_types = {
                  "w_eps0"       : (1.0, 0, 'Weight of dielectric constant', 'Condensed phase property targets', 'liquid, lipid'),
                  "w_al"         : (1.0, 0, 'Weight of average area per lipid', 'Lipid property targets', 'lipid'),
                  "w_scd"        : (1.0, 0, 'Weight of deuterium order parameter', 'Lipid property targets', 'lipid'),
+                 "w_vl"         : (1.0, 0, 'Weight of average volume per lipid', 'Lipid property targets', 'lipid'),
                  "w_energy"     : (1.0, 0, 'Weight of energy', 'Ab initio targets', 'liquid'),
                  "w_force"      : (1.0, 0, 'Weight of atomistic forces', 'Ab initio targets', 'liquid'),
                  "w_netforce"   : (0.0, 0, 'Weight of net forces (condensed to molecules, residues, or charge groups)', 'Ab initio targets', 'abinitio'),
