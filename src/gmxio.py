@@ -1061,12 +1061,12 @@ class GMX(Engine):
         return NewMol.xyzs
 
     def n_snaps(self, nsteps, step_interval, timestep):
-        return int((nsteps * 1.0 / step_interval) * timestep)
+        return int((nsteps * 1.0 / step_interval) * timestep) + 1
 
-    def scd_persnap(self, ndx, timestep, final_frame):
+    def scd_persnap(self, trj_file, ndx, timestep, frame_f):
         Scd = []
-        for snap in range(0, final_frame + 1):
-            self.callgmx("g_order -s %s-md.tpr -f %s-md.trr -n %s-%s.ndx -od %s-%s.xvg -b %i -e %i -xvg no" % (self.name, self.name, self.name, ndx, self.name, ndx, snap, snap))
+        for snap in range(frame_f):
+            self.callgmx("g_order -s %s-md.tpr -f %s -n %s-%s.ndx -od %s-%s.xvg -b %i -e %i -xvg no" % (self.name, trj_file, self.name, ndx, self.name, ndx, snap, snap))
             Scd_snap = []
             for line in open("%s-%s.xvg" % (self.name, ndx)):
                 s = [float(i) for i in line.split()]
@@ -1084,18 +1084,49 @@ class GMX(Engine):
         
         # Loop over g_order for each frame.
         # Adjust nsteps to account for nstxout = 1000.
-        sn1 = self.scd_persnap('sn1', timestep, n_snap)
-        sn2 = self.scd_persnap('sn2', timestep, n_snap)
-        for i in range(0, n_snap + 1):
+
+        # If trajectory is over 100 ps in length, split into 100 ps long xtc files.
+        split_threshold = 100
+        if n_snap > split_threshold:
+            self.callgmx('trjconv -f %s-md.trr -s %s-md.tpr -split %i -o trj_slice_' % (self.name, self.name, split_threshold), stdin="System\n")
+            trj_slices = [f for f in os.listdir('.') if ('trj_slice_' in f and 'xtc' in f)]
+            n_slices = len(trj_slices)
+            trj_slices.sort()
+            # Figure out number of slices in the final trajectory slice.
+            slice_mod = n_snap % split_threshold
+            sn1 = []
+            sn2 = []
+            # Loop over g_order for each frame.
+            for slice_n, slice in enumerate(trj_slices):
+                if slice != trj_slices[-1]:
+                    sn1.extend(self.scd_persnap(slice, 'sn1', timestep, split_threshold))
+                    sn2.extend(self.scd_persnap(slice, 'sn2', timestep, split_threshold))
+                else:
+                    sn1.extend(self.scd_persnap(slice, 'sn1', timestep, slice_mod))
+                    sn2.extend(self.scd_persnap(slice, 'sn2', timestep, slice_mod))
+        else:
+            sn1 = self.scd_persnap('%s-md.trr' % self.name, 'sn1', timestep, n_snap)
+            sn2 = self.scd_persnap('%s-md.trr' % self.name, 'sn2', timestep, n_snap)
+
+        # Combine.
+        for i in range(0, n_snap):
             sn1[i].extend(sn2[i])
         Scds = np.abs(np.array(sn1))
         return Scds
 
-    def n_nonwater(self, structure_file):
+    def get_nmol(self, structure_file):
         mol = Molecule(structure_file)
-        n_mol = len(mol.molecules)
+        # ID lipids by phosphorus atom.
+        n_lipids = len([i for i in mol.Data['elem'] if i == 'P'])
         n_sol = len([i for i in mol.Data['resname'] if i == 'SOL']) * 1.0 / 3
-        return n_mol - n_sol
+        return n_sol, n_lipids
+
+    # Get volume of an SPC water as a function of temperature.
+    # These values were determined from water box simulations under the same mdp conditions.
+    # This is hard coded but would be annoying to find generally.
+    def water_vol(self, temp):
+       V_w = {'323.15': 0.03070, '333.15': 0.03096, '338.15': 0.03109, '353.15': 0.03153} 
+       return V_w[temp]
 
     def molecular_dynamics(self, nsteps, timestep, temperature=None, pressure=None, nequil=0, nsave=0, minimize=True, threads=None, verbose=False, bilayer=False, **kwargs):
         
@@ -1121,6 +1152,7 @@ class GMX(Engine):
         EComps      = (dict)      Energy components
         Als         = (array)     Average area per lipid in nm^2
         Scds        = (Nx28 array) Deuterium order parameter
+        Vls         = (array)     Average volume per lipid in nm^3
         """
 
         if verbose: logger.info("Molecular dynamics simulation with GROMACS engine.\n")
@@ -1207,23 +1239,28 @@ class GMX(Engine):
         # Calculate deuterium order parameter for bilayer optimization.
         if bilayer:
             # Figure out how many lipids in simulation.
-            n_lip = self.n_nonwater('%s.gro' % self.name)
+            n_h2o, n_lip = self.get_nmol('%s.gro' % self.name)
             n_snap = self.n_snaps(nsteps, 1000, timestep)
             Scds = self.calc_scd(n_snap, timestep)
-            al_vars = ['Box-Y', 'Box-X']
-            self.callgmx("g_energy -f %s-md.edr -o %s-md-energy-xy.xvg -xvg no" % (self.name, self.name), stdin="\n".join(al_vars))
+            prop_vars = ['Volume', 'Box-Y', 'Box-X']
+            self.callgmx("g_energy -f %s-md.edr -o %s-md-energy-xy.xvg -xvg no" % (self.name, self.name), stdin="\n".join(prop_vars))
+            Vs = []
             Xs = []
             Ys = []
             for line in open("%s-md-energy-xy.xvg" % self.name):
                 s = [float(i) for i in line.split()]
-                Xs.append(s[-1])
+                Xs.append(s[-3])
                 Ys.append(s[-2])
+                Vs.append(s[-1])
             Xs = np.array(Xs)
             Ys = np.array(Ys)
             Als = 2 * (Xs * Ys) / n_lip
+            Vs = np.array(Vs)
+            Vls = (Vs - n_h2o * self.water_vol(temperature.split()[0])) / n_lip
         else:
             Scds = 0
             Als = 0
+            Vls = 0
 
         # Perform energy component analysis and return properties.
         self.callgmx("g_energy -f %s-md.edr -o %s-md-energy.xvg -xvg no" % (self.name, self.name), stdin="\n".join(ekeep))
@@ -1250,7 +1287,7 @@ class GMX(Engine):
         Ecomps = OrderedDict([(key, np.array(val)) for key, val in ecomp.items()])
         # Initialized property dictionary.
         prop_return = OrderedDict()
-        prop_return.update({'Rhos': Rhos, 'Potentials': Potentials, 'Kinetics': Kinetics, 'Volumes': Volumes, 'Dips': Dips, 'Ecomps': Ecomps, 'Als': Als, 'Scds': Scds})
+        prop_return.update({'Rhos': Rhos, 'Potentials': Potentials, 'Kinetics': Kinetics, 'Volumes': Volumes, 'Dips': Dips, 'Ecomps': Ecomps, 'Als': Als, 'Scds': Scds, 'Vls': Vls})
         if verbose: logger.info("Finished!\n")
         return prop_return
 
@@ -1391,6 +1428,8 @@ class Liquid_GMX(Liquid):
         # Send back the trajectory file.
         if self.save_traj > 0:
             self.extra_output += ['liquid-md.trr']
+            self.extra_output += ['liquid-md.edr']
+            self.extra_output += ['liquid-md.tpr']
         # Dictionary of last frames.
         self.LfDict = OrderedDict()
         self.LfDict_New = OrderedDict()
