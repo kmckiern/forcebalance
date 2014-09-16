@@ -393,6 +393,7 @@ def main():
     EDA = prop_return['Ecomps']
     Als = prop_return['Als']
     Scds = prop_return['Scds']
+    Vls = prop_return['Vls']
 
     # Create a bunch of physical constants.
     # Energies are in kJ/mol
@@ -650,6 +651,25 @@ def main():
     # calc_al(None, **{'a_': Als})
 
     #----
+    # Average volume per lipid
+    #----
+    Vl_avg, Vl_err = mean_stderr(Vls)
+    # Build the first V_l derivative.
+    GVl = mBeta * (flat(np.mat(G) * col(Vls)) / L - np.mean(Vls) * np.mean(G, axis=1))
+    # Print out V_l and its derivative.
+    Sep = printcool("Average Volume per Lipid: % .4f +- % .4f nm^3\nAnalytic Derivative:" % (Vl_avg, Vl_err))
+    FF.print_map(vals=GVl)
+    logger.info(Sep)
+
+    def calc_vl(b = None, **kwargs):
+        if b == None: b = np.ones(L,dtype=float)
+        if 'v_' in kwargs:
+            v_ = kwargs['v_']
+        return bzavg(v_,b)
+
+    # calc_vl(None, **{'v_': Vls})
+
+    #----
     # Bilayer Isothermal compressibility
     #----
     kbT = 1.3806488e-23 * T
@@ -717,7 +737,7 @@ def main():
     pvals = FF.make(mvals)
 
     logger.info("Writing all simulation data to disk.\n")
-    lp_dump((Rhos, Volumes, Potentials, Energies, Dips, G, [GDx, GDy, GDz], Rho_err, Alpha_err, Kappa_err, Cp_err, Eps0_err, NMol, Als, Al_err, Scds, Scd_err, LKappa_err),'npt_result.p')
+    lp_dump((Rhos, Volumes, Potentials, Energies, Dips, G, [GDx, GDy, GDz], Rho_err, Alpha_err, Kappa_err, Cp_err, Eps0_err, NMol, Als, Al_err, Scds, Scd_err, LKappa_err, Vls, Vl_err),'npt_result.p')
 
 
 if __name__ == "__main__":
