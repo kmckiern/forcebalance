@@ -67,7 +67,7 @@ class Lipid(Target):
         self.set_option(tgt_opts,'w_lkappa',forceprint=True)
         # Weight of the deuterium order parameter
         self.set_option(tgt_opts,'w_scd',forceprint=True)
-        # Fractional weight of the volume per lipid
+        # Weight of the volume per lipid
         self.set_option(tgt_opts,'w_vl',forceprint=True)
         if not self.w_normalize:
             warn_press_key("As of July 17, 2014, the property weights are no longer normalized by default.\nSet w_normalize in $target to restore the old behavior.")
