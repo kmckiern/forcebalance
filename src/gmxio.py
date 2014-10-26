@@ -152,6 +152,7 @@ dftypes = [None, 'PDIHS', 'IDIHS', 'RBDIHS', 'PIMPDIHS', 'FOURDIHS', None, None,
 fdict = {
     'atomtypes'     : nftypes,
     'nonbond_params': pftypes,
+    'pairtypes'     : pftypes,
     'bonds'         : bftypes,
     'bondtypes'     : bftypes,
     'angles'        : aftypes,
@@ -401,6 +402,9 @@ class ITP_Reader(BaseReader):
                                                  'Charge'       : atype['chg'],
                                                  'ParticleType' : atype['ptp']}
         elif self.sec == 'nonbond_params':
+            atom = [s[0], s[1]]
+            self.itype = pftypes[self.nbtype]
+        elif self.sec == 'pairtypes':
             atom = [s[0], s[1]]
             self.itype = pftypes[self.nbtype]
         elif self.sec == 'atoms':
@@ -715,6 +719,8 @@ class GMX(Engine):
         csplit = command.split()
         prog = os.path.join(self.gmxpath, csplit[0])
         csplit[0] = prog + self.gmxsuffix
+        print csplit
+        print stdin
         return _exec(' '.join(csplit), stdin=stdin, print_to_screen=print_to_screen, print_command=print_command, **kwargs)
 
     def warngmx(self, command, warnings=[], maxwarn=1, **kwargs):
@@ -1125,7 +1131,10 @@ class GMX(Engine):
     # These values were determined from water box simulations under the same mdp conditions.
     # This is hard coded but would be annoying to find generally.
     def water_vol(self, temp):
-       V_w = {'323.15': 0.03070, '333.15': 0.03096, '338.15': 0.03109, '353.15': 0.03153} 
+       # if model == 'spc':
+       #     V_w = {'323.15': 0.03070, '333.15': 0.03096, '338.15': 0.03109, '353.15': 0.03153} 
+       # if model == 'tip3pfb':
+       V_w = {'323.15': 0.03043, '333.15': 0.03061, '338.15': 0.03071, '353.15': 0.03104} 
        return V_w[temp]
 
     def molecular_dynamics(self, nsteps, timestep, temperature=None, pressure=None, nequil=0, nsave=0, minimize=True, threads=None, verbose=False, bilayer=False, **kwargs):
