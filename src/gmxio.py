@@ -719,8 +719,6 @@ class GMX(Engine):
         csplit = command.split()
         prog = os.path.join(self.gmxpath, csplit[0])
         csplit[0] = prog + self.gmxsuffix
-        print csplit
-        print stdin
         return _exec(' '.join(csplit), stdin=stdin, print_to_screen=print_to_screen, print_command=print_command, **kwargs)
 
     def warngmx(self, command, warnings=[], maxwarn=1, **kwargs):
@@ -1130,6 +1128,7 @@ class GMX(Engine):
     # Get volume of an SPC water as a function of temperature.
     # These values were determined from water box simulations under the same mdp conditions.
     # This is hard coded but would be annoying to find generally.
+    # KM: remember to make this better at some point
     def water_vol(self, temp):
        # if model == 'spc':
        #     V_w = {'323.15': 0.03070, '333.15': 0.03096, '338.15': 0.03109, '353.15': 0.03153} 
