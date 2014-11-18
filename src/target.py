@@ -710,6 +710,7 @@ class Target(forcebalance.BaseClass):
         outside = Write this file outside the targets directory
         """
         cwd = os.getcwd()
+        self.outside = outside
         if outside != None:
             self.ffpd = cwd.replace(os.path.join(self.root, self.tempdir), os.path.join(self.root, self.tempbase, self.outside))
         else:

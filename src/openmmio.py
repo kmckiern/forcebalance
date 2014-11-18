@@ -647,14 +647,14 @@ class OpenMM(Engine):
         ## Set system options from periodic boundary conditions.
         self.pbc = pbc
         if pbc:
-            self.mmopts.setdefault('nonbondedMethod', PME)
+            self.mmopts.setdefault('nonbondedMethod', CutoffNonPeriodic)
             if self.AMOEBA:
                 self.mmopts.setdefault('nonbondedCutoff', 0.7*nanometer)
                 self.mmopts.setdefault('vdwCutoff', 0.85)
                 self.mmopts.setdefault('aEwald', 5.4459052)
                 self.mmopts.setdefault('pmeGridDimensions', [24,24,24])
             else:
-                self.mmopts.setdefault('nonbondedCutoff', 0.85*nanometer)
+                self.mmopts.setdefault('nonbondedCutoff', 0.9*nanometer)
                 self.mmopts.setdefault('useSwitchingFunction', True)
                 self.mmopts.setdefault('switchingDistance', 0.75*nanometer)
             self.mmopts.setdefault('useDispersionCorrection', True)
