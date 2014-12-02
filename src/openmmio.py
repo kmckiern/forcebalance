@@ -654,10 +654,11 @@ class OpenMM(Engine):
                 self.mmopts.setdefault('aEwald', 5.4459052)
                 self.mmopts.setdefault('pmeGridDimensions', [24,24,24])
             else:
-                self.mmopts.setdefault('nonbondedCutoff', 0.9*nanometer)
+                self.mmopts.setdefault('nonbondedCutoff', 1.2*nanometer)
                 self.mmopts.setdefault('useSwitchingFunction', True)
-                self.mmopts.setdefault('switchingDistance', 0.75*nanometer)
-            self.mmopts.setdefault('useDispersionCorrection', True)
+                self.mmopts.setdefault('switchingDistance', 1.15*nanometer)
+                # self.mmopts.setdefault('solventDielectric', np.inf)
+            # self.mmopts.setdefault('useDispersionCorrection', True)
         else:
             self.mmopts.setdefault('nonbondedMethod', NoCutoff)
             self.mmopts['removeCMMotion'] = False
