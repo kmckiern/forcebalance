@@ -644,12 +644,13 @@ class OpenMM(Engine):
                     self.mmopts['polarization'] = 'direct'
             self.mmopts['rigidWater'] = self.FF.rigid_water
 
+        printcool_dictionary(kwargs, title="before kwargs. Creating/updating simulation in engine %s with system settings:" % (self.name))
         printcool_dictionary(self.mmopts, title="before. Creating/updating simulation in engine %s with system settings:" % (self.name))
 
         ## Set system options from periodic boundary conditions.
         self.pbc = pbc
         if pbc:
-            self.mmopts.setdefault('nonbondedMethod', CutoffNonPeriodic)
+            self.mmopts.setdefault('nonbondedMethod', CutoffPeriodic)
             if self.AMOEBA:
                 self.mmopts.setdefault('nonbondedCutoff', 0.7*nanometer)
                 self.mmopts.setdefault('vdwCutoff', 0.85)
