@@ -657,7 +657,20 @@ class Optimizer(forcebalance.BaseClass):
         """
         from scipy import optimize
 
-        X, G, H = (data['X0'], data['G0'], data['H0']) if self.bhyp else (data['X'], data['G'], data['H'])
+        X, G, Hess0 = (data['X0'], data['G0'], data['H0']) if self.bhyp else (data['X'], data['G'], data['H'])
+
+        # scale hessian such that condition number is 1 via SVD
+        # sanity pre-print
+        logger.info("pre-scaled Hessian: \n")
+        pmat2d(Hess0, precision=5, loglevel=INFO)
+        # transformers to the rescue
+        U, s, V = np.linalg.svd(Hess0)
+        s = np.linspace(1,1,len(s))
+        H = np.dot(U, np.dot(np.diag(S), V))
+        # sanity post-print
+        logger.info("pre-scaled Hessian: \n")
+        pmat2d(H, precision=5, loglevel=INFO)
+
         H1 = H.copy()
         H1 = np.delete(H1, self.excision, axis=0)
         H1 = np.delete(H1, self.excision, axis=1)
