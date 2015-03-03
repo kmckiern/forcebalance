@@ -668,7 +668,7 @@ class Optimizer(forcebalance.BaseClass):
         s = np.linspace(1,1,len(s))
         H = np.dot(U, np.dot(np.diag(S), V))
         # sanity post-print
-        logger.info("pre-scaled Hessian: \n")
+        logger.info("post-scaled Hessian: \n")
         pmat2d(H, precision=5, loglevel=INFO)
 
         H1 = H.copy()
