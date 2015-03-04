@@ -650,7 +650,6 @@ class OpenMM(Engine):
         ## Set system options from periodic boundary conditions.
         self.pbc = pbc
         if pbc:
-            # self.mmopts.setdefault('nonbondedMethod', PME)
             self.mmopts.setdefault('nonbondedMethod', CutoffPeriodic)
             if self.AMOEBA:
                 self.mmopts.setdefault('nonbondedCutoff', 0.7*nanometer)
@@ -661,10 +660,13 @@ class OpenMM(Engine):
                 self.mmopts.setdefault('nonbondedCutoff', 1.2*nanometer)
                 self.mmopts.setdefault('useSwitchingFunction', True)
                 self.mmopts.setdefault('switchingDistance', 1.15*nanometer)
+                self.mmopts.setdefault('solventDielectric', np.inf)
             # self.mmopts.setdefault('useDispersionCorrection', True)
         else:
             self.mmopts.setdefault('nonbondedMethod', NoCutoff)
             self.mmopts['removeCMMotion'] = False
+
+        printcool_dictionary(self.mmopts, title="after. Creating/updating simulation in engine %s with system settings:" % (self.name))
 
         ## Generate OpenMM-compatible positions
         self.xyz_omms = []
