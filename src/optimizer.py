@@ -664,7 +664,7 @@ class Optimizer(forcebalance.BaseClass):
         printcool("pre-scaled Hessian: \n")
         for hval in Hess0:
             printcool(hval)
-        pmat2d(Hess0, precision=5, loglevel=INFO)
+        # pmat2d(Hess0, precision=5, loglevel=INFO)
         # transformers to the rescue
         U, s, V = np.linalg.svd(Hess0)
         # add some noise around average of eigenvaluesnp.dot(U, np.dot(np.diag(S), V))
