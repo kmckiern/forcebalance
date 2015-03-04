@@ -661,15 +661,24 @@ class Optimizer(forcebalance.BaseClass):
 
         # scale hessian such that condition number is 1 via SVD
         # sanity pre-print
-        logger.info("pre-scaled Hessian: \n")
+        printcool("pre-scaled Hessian: \n")
+        for hval in Hess0:
+            print hval
         pmat2d(Hess0, precision=5, loglevel=INFO)
         # transformers to the rescue
         U, s, V = np.linalg.svd(Hess0)
-        s = np.linspace(1,1,len(s))
+        # add some noise around average of eigenvaluesnp.dot(U, np.dot(np.diag(S), V))
+        mu = 1
+        sigma = .05
+        S = np.random.normal(mu, sigma, 5)*np.average(s)
+        # s = np.linspace(1,1,len(s))
         H = np.dot(U, np.dot(np.diag(S), V))
         # sanity post-print
-        logger.info("pre-scaled Hessian: \n")
-        pmat2d(H, precision=5, loglevel=INFO)
+        printcool("pre-scaled Hessian: \n")
+        for hvalf in H:
+            print hvalf
+        # couldn't get this to work
+        # pmat2d(H, precision=5, loglevel=INFO)
 
         H1 = H.copy()
         H1 = np.delete(H1, self.excision, axis=0)
