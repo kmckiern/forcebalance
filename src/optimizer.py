@@ -663,7 +663,7 @@ class Optimizer(forcebalance.BaseClass):
         # sanity pre-print
         printcool("pre-scaled Hessian: \n")
         for hval in Hess0:
-            printcool(hval)
+            print hval
         # pmat2d(Hess0, precision=5, loglevel=INFO)
         # transformers to the rescue
         U, s, V = np.linalg.svd(Hess0)
@@ -676,7 +676,7 @@ class Optimizer(forcebalance.BaseClass):
         # sanity post-print
         printcool("pre-scaled Hessian: \n")
         for hvalf in H:
-            printcool(hvalf)
+            print hvalf
         # couldn't get this to work
         # pmat2d(H, precision=5, loglevel=INFO)
 
