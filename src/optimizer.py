@@ -657,6 +657,9 @@ class Optimizer(forcebalance.BaseClass):
         """
         from scipy import optimize
 
+        X, G, H = (data['X0'], data['G0'], data['H0']) if self.bhyp else (data['X'], data['G'], data['H'])
+
+        """ this was not that successful.  try new approach
         X, G, Hess0 = (data['X0'], data['G0'], data['H0']) if self.bhyp else (data['X'], data['G'], data['H'])
 
         # scale hessian such that condition number is 1 via SVD
@@ -678,7 +681,7 @@ class Optimizer(forcebalance.BaseClass):
         for hvalf in H:
             print hvalf
         # couldn't get this to work
-        # pmat2d(H, precision=5, loglevel=INFO)
+        # pmat2d(H, precision=5, loglevel=INFO)"""
 
         H1 = H.copy()
         H1 = np.delete(H1, self.excision, axis=0)
